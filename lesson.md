@@ -1,36 +1,16 @@
-# Lesson 12: Continuous Deployment - Automated Deployment to Render
+# Lesson 12: Continuous Deployment - Automated Deployment to Railway
 
 ## Learning Objectives
 
 By the end of this lesson, you will be able to:
 1. Understand the difference between Continuous Delivery and Continuous Deployment
-2. Deploy a Spring Boot application to Render
+2. Deploy a Spring Boot application to Railway
 3. Configure CircleCI to automatically deploy applications after successful tests
 4. Implement a complete CI/CD pipeline from code push to production
 5. Troubleshoot common deployment issues
 
 ---
 
-## Prerequisites
-
-Before starting this lesson, you should have:
-
-### ✅ Completed Previous Lessons
-- [ ] Lesson 7: Continuous Integration with CircleCI (devops-demo)
-- [ ] Lesson 10: Hosting Options (Render overview)
-
-### ✅ Project Ready
-- [ ] devops-demo project from Lesson 7
-- [ ] CircleCI pipeline working (build, test, publish jobs)
-- [ ] Docker image publishing to Docker Hub
-
-### ✅ Accounts Ready
-- [ ] GitHub account
-- [ ] CircleCI account (linked to GitHub)
-- [ ] Docker Hub account
-- [ ] Render account (free) - from Lesson 10
-
----
 
 ## Introduction
 
@@ -41,7 +21,7 @@ In Lesson 7, you built a CI pipeline that automatically builds, tests, and publi
 **Today, you'll complete the pipeline:**
 - Code push → GitHub
 - CircleCI builds, tests, publishes
-- **Render automatically deploys your app** ← NEW!
+- **Railway automatically deploys your app** ← NEW!
 - Users access your live application
 
 **This is Continuous Deployment (CD)!**
@@ -214,7 +194,7 @@ Professional teams typically have multiple environments:
 - Activated if production fails (earthquake, fire, server failure)
 - Keeps business running during disasters
 
-**For this lesson:** We'll deploy directly to **Production** on Render (simple setup for learning).
+**For this lesson:** We'll deploy directly to **Production** on Railway (simple setup for learning).
 
 ---
 
@@ -243,16 +223,17 @@ Professional teams typically have multiple environments:
 
 ---
 
-## Part 2 - Prepare Render for Deployment (30 minutes)
+## Part 2 - Prepare Railway for Deployment (30 minutes)
 
-### Why Render?
+### Why Railway?
 
-In Lesson 10, you learned about hosting platforms. We're using Render because:
+In Lesson 10, you learned about hosting platforms. We're using Railway because:
 
-✅ Free tier (750 hours/month)
-✅ No credit card required
+✅ Extremely simple deployment (2 minutes)
+✅ $5 monthly credit (perfect for learning)
+✅ No cold starts (always-on)
 ✅ Easy integration with CircleCI
-✅ Similar to Heroku but free
+✅ Beautiful dashboard and logs
 
 ---
 
@@ -262,7 +243,7 @@ Let's confirm what we have from Lesson 7:
 
 **Your devops-demo project should have:**
 - ✅ Spring Boot application with `/hello` endpoint
-- ✅ Dockerfile (multi-stage build)
+- ✅ Dockerfile (multi-stage build with correct JDK base images)
 - ✅ `.circleci/config.yml` with build, test, publish jobs
 - ✅ Docker image publishing to Docker Hub
 
@@ -276,104 +257,101 @@ Let's confirm what we have from Lesson 7:
 
 ---
 
-### Step 2: Create Render Account (5 minutes)
+### Step 2: Create Railway Account (5 minutes)
 
-**If you don't have a Render account from Lesson 10:**
+**If you don't have a Railway account from Lesson 10:**
 
-1. Go to [https://render.com](https://render.com)
-2. Click **"Get Started for Free"**
-3. Sign up with **GitHub** (recommended) or Email
-4. Verify your email
-5. **No credit card required!**
+1. Go to [https://railway.app](https://railway.app)
+2. Click **"Login"** or **"Start a New Project"**
+3. Sign up with **GitHub** (recommended)
+4. Add a credit card (required but won't charge unless you exceed $5 credit)
+5. Verify your email if prompted
 
-**If you already have a Render account:** Just login.
+**If you already have a Railway account:** Just login.
 
 ---
 
-### Step 3: Create Web Service on Render (15 minutes)
+### Step 3: Create Web Service on Railway (15 minutes)
 
 Now let's create the application service.
 
-**3.1: Create Web Service**
+**3.1: Start New Project**
 
-1. Click **"New +"** → **"Web Service"**
+1. Click **"Start a New Project"** (or "New Project")
+2. Select **"Deploy from GitHub repo"**
 
 **3.2: Connect to GitHub**
 
-Choose **"Build and deploy from a Git repository"**
-
 **If this is your first time:**
 - Click **"Connect GitHub"**
-- Authorize Render to access your repositories
+- Authorize Railway to access your repositories
 - Select your devops-demo repository
 
 **If you've connected GitHub before:**
 - Just select your devops-demo repository from the list
 
-**3.3: Configure Web Service**
+**3.3: Deploy**
 
-Fill in these details:
+Railway automatically:
+1. Detects your Dockerfile
+2. Builds the Docker image
+3. Deploys the container
+4. **Deployment completes in 2-3 minutes!**
 
-**Basic Settings:**
-- **Name:** `devops-demo-app` (this becomes your URL)
-- **Region:** Singapore
-- **Branch:** `main` (or `master` if that's your default branch)
-- **Runtime:** Docker
-- **Instance Type:** Free
+**3.4: Claim the Project**
 
-**Build Settings:**
-- **Dockerfile Path:** `./Dockerfile` (Render auto-detects this)
+After deployment, you'll see a warning:
+> "This is a temporary project and will be deleted in 24 hours"
 
-**Advanced Settings (Click to expand):**
-
-**Environment Variables:**
-- **No environment variables needed** for devops-demo (it's a simple /hello endpoint app)
-- *Note: For apps with databases, you would add SPRING_DATASOURCE_URL here*
-
-**Health Check Path:**
-- Value: `/hello`
-- This tells Render to check if your app is running
-
-**Docker Command (leave blank):**
-- Render will use the CMD from your Dockerfile
-
-**3.4: Deploy**
-
-Click **"Create Web Service"**
-
-**What happens now:**
-1. Render pulls code from GitHub
-2. Builds Docker image using your Dockerfile
-3. Starts the container
-4. Assigns a URL: `https://devops-demo-app.onrender.com`
-
-**This takes 5-7 minutes on free tier.**
+Click **"Claim Project"** button to make it permanent.
 
 ---
 
-### Step 4: Verify Deployment (5 minutes)
+### Step 4: Generate Public Domain (5 minutes)
+
+To access your app from the internet:
+
+1. Click on the **devops-demo** service (in the project view)
+2. Click **"Settings"** tab at the top
+3. Scroll down to **"Networking"** section
+4. Under **"Public Networking"**, click **"Generate Domain"**
+5. In the dialog:
+   - **Port:** Enter `8080` (Spring Boot default port)
+   - Click **"Generate Domain"** button
+
+Railway assigns a URL like:
+```
+https://devops-demo-production.up.railway.app
+```
+
+---
+
+### Step 5: Verify Deployment (5 minutes)
 
 **Watch the deployment logs:**
 
-In the Render dashboard, you'll see:
+In the Railway dashboard, click **"Deployments"** tab:
 ```
-==> Cloning from GitHub...
-==> Building with Dockerfile...
+==> Building Dockerfile
 ==> Downloading dependencies...
 ==> Building JAR file...
 ==> Creating Docker image...
 ==> Starting service...
-==> Health check passed ✓
-==> Your service is live!
+==> Deployment successful!
 ```
 
 **Test your application:**
 
-Once deployment completes, you'll see: **"Your service is live"**
+Once deployment completes:
 
-1. Click on the URL: `https://devops-demo-app.onrender.com`
+1. Copy the URL from Settings → Networking
 2. Add `/hello` to the URL
-3. You should see: **"DevOps demo application is running!"**
+3. Open in browser:
+   ```
+   https://devops-demo-production.up.railway.app/hello
+   ```
+
+4. You should see: **"DevOps demo application is running!"**
 
 **Success!** Your app is deployed manually. Now let's automate it!
 
@@ -390,86 +368,117 @@ Code Push → GitHub → CircleCI → Build → Test → Publish to Docker Hub �
 
 **What we want:**
 ```
-Code Push → GitHub → CircleCI → Build → Test → Publish → Deploy to Render → LIVE!
+Code Push → GitHub → CircleCI → Build → Test → Publish → Deploy to Railway → LIVE!
 ```
 
 ---
 
-### Method: Render Deploy Hook
+### Method: Railway Webhooks
 
-Render provides a **Deploy Hook** - a special URL that triggers deployment when called.
+Railway supports deployment triggers via webhooks. We'll use CircleCI to trigger Railway deployments after successful builds.
 
 **How it works:**
-1. You get a unique webhook URL from Render
-2. CircleCI calls this URL after successful tests
-3. Render automatically pulls latest code and redeploys
+1. CircleCI pushes code to GitHub
+2. Railway detects GitHub push
+3. Railway automatically pulls latest code and rebuilds
 
-**Why this is simple:**
-- No complex API authentication
-- Just call a URL (curl command)
-- Render handles the rest
+**But we want more control:** Only deploy after tests pass!
 
----
-
-### Step 1: Get Render Deploy Hook (10 minutes)
-
-**1.1: Go to Render Dashboard**
-
-1. Open your `devops-demo-app` service
-2. Click **"Settings"** (left sidebar)
-3. Scroll down to **"Deploy Hook"**
-
-**1.2: Create Deploy Hook**
-
-Click **"Create Deploy Hook"**
-
-You'll get a URL like:
-```
-https://api.render.com/deploy/srv-xxxxxxxxxxxxx?key=yyyyyyyyyyyy
-```
-
-**Copy this URL** - you'll need it in CircleCI!
-
-**What this URL does:**
-- Tells Render to pull latest code from GitHub
-- Rebuild Docker image
-- Deploy new version
+**Better approach:**
+1. CircleCI builds and tests
+2. If successful, CircleCI triggers Railway deployment via Railway CLI or webhook
+3. Railway pulls latest code and redeploys
 
 ---
 
-### Step 2: Add Deploy Hook to CircleCI (10 minutes)
+### Step 1: Get Railway API Token (10 minutes)
 
-**2.1: Go to CircleCI**
+**1.1: Go to Railway Account Settings**
+
+1. Click your profile (bottom left)
+2. Click **"Account Settings"**
+3. Click **"Tokens"** tab
+
+**1.2: Create API Token**
+
+1. Click **"Create Token"**
+2. Give it a name: `CircleCI Deployment`
+3. Click **"Create"**
+4. **Copy the token** - you'll need it in CircleCI!
+   ```
+   Format: railway_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+   ```
+
+**Important:** Save this token securely - it won't be shown again!
+
+---
+
+### Step 2: Get Railway Service and Project IDs (10 minutes)
+
+We need to tell CircleCI which Railway service to deploy.
+
+**2.1: Get Project ID**
+
+1. Go to your Railway project dashboard
+2. Click **"Settings"** (in left sidebar of project)
+3. Find **"Project ID"**
+4. Copy it (format: `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`)
+
+**2.2: Get Service ID**
+
+1. Click on your **devops-demo** service
+2. Click **"Settings"** tab
+3. Find **"Service ID"**
+4. Copy it (format: `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`)
+
+**Save both IDs** - you'll add them to CircleCI next!
+
+---
+
+### Step 3: Add Railway Credentials to CircleCI (10 minutes)
+
+**3.1: Go to CircleCI**
 
 1. Open [https://app.circleci.com](https://app.circleci.com)
 2. Go to your devops-demo project
 3. Click **"Project Settings"**
 4. Click **"Environment Variables"**
 
-**2.2: Add Deploy Hook as Environment Variable**
+**3.2: Add Railway Credentials**
 
-Click **"Add Environment Variable"**
+Add these three environment variables:
 
-- **Name:** `RENDER_DEPLOY_HOOK`
-- **Value:** Paste your Deploy Hook URL from Step 1.2
+**Variable 1: API Token**
+- **Name:** `RAILWAY_TOKEN`
+- **Value:** Your Railway API token from Step 1
 - Click **"Add Environment Variable"**
 
-**Why environment variable?**
-- Keep webhook URL secret
+**Variable 2: Project ID**
+- **Name:** `RAILWAY_PROJECT_ID`
+- **Value:** Your Project ID from Step 2
+- Click **"Add Environment Variable"**
+
+**Variable 3: Service ID**
+- **Name:** `RAILWAY_SERVICE_ID`
+- **Value:** Your Service ID from Step 2
+- Click **"Add Environment Variable"**
+
+**Why environment variables?**
+- Keep credentials secret
 - Don't expose in code
 - Easy to change if needed
 
 ---
 
-### Step 3: Update CircleCI Configuration (30 minutes)
+### Step 4: Update CircleCI Configuration (30 minutes)
 
 Now let's add a `deploy` job to your pipeline.
 
-**3.1: Open Your Project**
+**4.1: Open Your Project**
 
 Open your devops-demo project in VS Code (or your editor).
 
-**3.2: Edit .circleci/config.yml**
+**4.2: Edit .circleci/config.yml**
 
 Open `.circleci/config.yml` file.
 
@@ -528,8 +537,7 @@ jobs:
       - checkout
       - attach_workspace:
           at: .
-      - setup_remote_docker:
-          version: 20.10.14
+      - setup_remote_docker
       - run:
           name: Build Docker image
           command: |
@@ -555,34 +563,50 @@ workflows:
             - test
 ```
 
-**3.3: Add Deploy Job**
+**4.3: Add Deploy Job**
 
 Add this new `deploy` job after the `publish` job:
 
 ```yml
   # ==========================================
-  # DEPLOY JOB - Trigger Render deployment
+  # DEPLOY JOB - Trigger Railway deployment
   # ==========================================
   deploy:
     docker:
       - image: cimg/base:stable
     steps:
       - run:
-          name: Trigger Render Deployment
+          name: Install Railway CLI
           command: |
-            echo "Triggering deployment on Render..."
-            curl -X POST $RENDER_DEPLOY_HOOK
-            echo "Deploy hook called successfully!"
-            echo "Render will now pull latest code and redeploy."
+            echo "Installing Railway CLI..."
+            curl -fsSL https://railway.app/install.sh | sh
+            export PATH="/root/.railway/bin:$PATH"
+            railway --version
+      - run:
+          name: Trigger Railway Deployment
+          command: |
+            export PATH="/root/.railway/bin:$PATH"
+            echo "Logging in to Railway..."
+            railway login --browserless
+            
+            echo "Linking to Railway project..."
+            railway link $RAILWAY_PROJECT_ID
+            
+            echo "Triggering deployment..."
+            railway up --service $RAILWAY_SERVICE_ID
+            
+            echo "Deployment triggered successfully!"
+            echo "Railway is now pulling latest code and redeploying."
 ```
 
 **What this does:**
-1. Uses a simple base image (no Java needed)
-2. Calls the Render Deploy Hook URL using `curl`
-3. Render automatically pulls latest code from GitHub
-4. Render rebuilds and redeploys
+1. Installs Railway CLI in CircleCI
+2. Logs in using the API token
+3. Links to your Railway project
+4. Triggers deployment for your specific service
+5. Railway pulls latest code from GitHub and redeploys
 
-**3.4: Update Workflow**
+**4.4: Update Workflow**
 
 Update your workflow to include the deploy job:
 
@@ -663,8 +687,7 @@ jobs:
       - checkout
       - attach_workspace:
           at: .
-      - setup_remote_docker:
-          version: 20.10.14
+      - setup_remote_docker
       - run:
           name: Build Docker image
           command: |
@@ -683,12 +706,27 @@ jobs:
       - image: cimg/base:stable
     steps:
       - run:
-          name: Trigger Render Deployment
+          name: Install Railway CLI
           command: |
-            echo "Triggering deployment on Render..."
-            curl -X POST $RENDER_DEPLOY_HOOK
-            echo "Deploy hook called successfully!"
-            echo "Render will now pull latest code and redeploy."
+            echo "Installing Railway CLI..."
+            curl -fsSL https://railway.app/install.sh | sh
+            export PATH="/root/.railway/bin:$PATH"
+            railway --version
+      - run:
+          name: Trigger Railway Deployment
+          command: |
+            export PATH="/root/.railway/bin:$PATH"
+            echo "Logging in to Railway..."
+            railway login --browserless
+            
+            echo "Linking to Railway project..."
+            railway link $RAILWAY_PROJECT_ID
+            
+            echo "Triggering deployment..."
+            railway up --service $RAILWAY_SERVICE_ID
+            
+            echo "Deployment triggered successfully!"
+            echo "Railway is now pulling latest code and redeploying."
 
 workflows:
   build_test_publish_deploy:
@@ -707,21 +745,21 @@ workflows:
 
 ---
 
-### Step 4: Commit and Push Changes (10 minutes)
+### Step 5: Commit and Push Changes (10 minutes)
 
-**4.1: Save Your Changes**
+**5.1: Save Your Changes**
 
 Save the `.circleci/config.yml` file.
 
-**4.2: Commit and Push**
+**5.2: Commit and Push**
 
 ```bash
 git add .circleci/config.yml
-git commit -m "Add CD: Deploy to Render automatically"
+git commit -m "Add CD: Deploy to Railway automatically"
 git push origin main
 ```
 
-**4.3: Watch the Magic! ✨**
+**5.3: Watch the Magic! ✨**
 
 1. Go to CircleCI: [https://app.circleci.com](https://app.circleci.com)
 2. Your pipeline should trigger automatically
@@ -729,22 +767,22 @@ git push origin main
    - ⏳ build (compiling...)
    - ⏳ test (running tests...)
    - ⏳ publish (pushing to Docker Hub...)
-   - ⏳ deploy (calling Render webhook...)
+   - ⏳ deploy (triggering Railway...)
 
 **Timeline:**
 - Build: ~2-3 minutes
 - Test: ~2 minutes
 - Publish: ~2-3 minutes
-- Deploy: ~10 seconds (just calls webhook)
-- **Render deployment:** ~5-7 minutes (after webhook)
+- Deploy: ~1 minute (Railway CLI trigger)
+- **Railway deployment:** ~2-3 minutes (after trigger)
 
-**Total:** ~12-15 minutes from push to production!
+**Total:** ~10-12 minutes from push to production!
 
 ---
 
-### Step 5: Verify Deployment (15 minutes)
+### Step 6: Verify Deployment (15 minutes)
 
-**5.1: Check CircleCI**
+**6.1: Check CircleCI**
 
 All 4 jobs should be green ✅:
 - build ✅
@@ -752,20 +790,21 @@ All 4 jobs should be green ✅:
 - publish ✅
 - deploy ✅
 
-**5.2: Check Render**
+**6.2: Check Railway**
 
-1. Go to Render dashboard: [https://dashboard.render.com](https://dashboard.render.com)
-2. Click on your `devops-demo-app`
-3. Click **"Events"** tab
-4. You should see: "Deploy triggered by deploy hook"
-5. Watch the deployment logs
+1. Go to Railway dashboard: [https://railway.app](https://railway.app)
+2. Click on your devops-demo project
+3. Click on your devops-demo service
+4. Click **"Deployments"** tab
+5. You should see a new deployment triggered
+6. Watch the deployment logs
 
-**5.3: Test Your Application**
+**6.3: Test Your Application**
 
-Once Render shows "Live":
+Once Railway shows "Active":
 
 ```bash
-curl https://devops-demo-app.onrender.com/hello
+curl https://devops-demo-production.up.railway.app/hello
 ```
 
 **Expected response:**
@@ -815,13 +854,13 @@ git push origin main
 2. build → test → publish → deploy
 3. All jobs complete successfully
 
-**In Render:**
-1. Receives webhook from CircleCI
+**In Railway:**
+1. Receives trigger from CircleCI
 2. Pulls latest code
 3. Rebuilds Docker image
 4. Deploys new version
 
-**Timeline:** ~12-15 minutes total
+**Timeline:** ~10-12 minutes total
 
 ---
 
@@ -830,7 +869,7 @@ git push origin main
 **Test the endpoint:**
 
 ```bash
-curl https://devops-demo-app.onrender.com/hello
+curl https://devops-demo-production.up.railway.app/hello
 ```
 
 **You should see the NEW message:**
@@ -874,13 +913,14 @@ Publish Job:
   - Image ready for deployment
 ```
 
-**3. Continuous Deployment (CircleCI → Render)**
+**3. Continuous Deployment (CircleCI → Railway)**
 ```
 Deploy Job:
-  - Call Render deploy hook (webhook)
-  - Render receives signal
+  - Install Railway CLI
+  - Authenticate with Railway API token
+  - Trigger deployment for specific service
   
-Render:
+Railway:
   - Pull latest code from GitHub
   - Build new Docker image
   - Stop old version
@@ -889,17 +929,17 @@ Render:
   - Route traffic to new version
 ```
 
-**4. Production (Render)**
+**4. Production (Railway)**
 ```
-Users access: https://devops-demo-app.onrender.com
+Users access: https://devops-demo-production.up.railway.app
 They see your latest changes!
 ```
 
-**Total time:** ~15 minutes from code push to production!
+**Total time:** ~10-12 minutes from code push to production!
 
 **Compare to manual deployment:**
 - Manual: Hours/days (build locally, upload, configure, deploy)
-- Automated: 15 minutes, completely hands-free
+- Automated: 10-12 minutes, completely hands-free
 
 ---
 
@@ -932,76 +972,89 @@ They see your latest changes!
 
 ### Common Issues and Solutions
 
-**Issue 1: Deploy job fails - "curl: command not found"**
+**Issue 1: Deploy job fails - "railway: command not found"**
 
-**Cause:** Wrong Docker image
+**Cause:** Railway CLI installation failed or PATH not set
 
 **Solution:**
+Ensure these lines are in your deploy job:
 ```yml
-deploy:
-  docker:
-    - image: cimg/base:stable  # Has curl pre-installed
+curl -fsSL https://railway.app/install.sh | sh
+export PATH="/root/.railway/bin:$PATH"
 ```
+
+Add `export PATH` before every `railway` command.
 
 ---
 
-**Issue 2: Render shows "Build failed"**
+**Issue 2: "railway login failed"**
+
+**Cause:** Invalid or missing RAILWAY_TOKEN
+
+**Solution:**
+1. Verify `RAILWAY_TOKEN` in CircleCI environment variables
+2. Regenerate token in Railway if needed
+3. Ensure token starts with `railway_`
+4. Check token has no extra spaces
+
+---
+
+**Issue 3: "Project not found" or "Service not found"**
+
+**Cause:** Wrong project/service IDs
+
+**Solution:**
+1. Verify `RAILWAY_PROJECT_ID` in CircleCI
+2. Verify `RAILWAY_SERVICE_ID` in CircleCI
+3. Both should be UUIDs (format: `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`)
+4. Get correct IDs from Railway Settings
+
+---
+
+**Issue 4: Railway shows "Build failed"**
 
 **Cause:** Dockerfile error or dependency issue
 
 **Solution:**
-1. Check Render logs for specific error
+1. Check Railway logs for specific error
 2. Verify Dockerfile builds locally: `docker build -t test .`
 3. Ensure pom.xml has all dependencies
-4. Check Java version in Dockerfile matches project
+4. Check Java version in Dockerfile matches project (21)
 
 ---
 
-**Issue 3: Application deployed but /hello returns 404**
+**Issue 5: Application deployed but /hello returns 404**
 
 **Cause:** Application not started or wrong port
 
 **Solution:**
-1. Check Render logs: Application should show "Started Application in X seconds"
+1. Check Railway logs: Application should show "Started Application in X seconds"
 2. Verify Spring Boot is running on port 8080
-3. Check health check path is `/hello` in Render settings
+3. Check port in Railway Settings → Networking is 8080
 
 ---
 
-**Issue 4: "Free instance will spin down with inactivity"**
-
-**Cause:** Normal behavior for free tier
-
-**Solution:**
-This is expected:
-- Free apps sleep after 15 minutes of inactivity
-- First request after sleep takes 30-60 seconds
-- Subsequent requests are fast
-- Upgrade to paid tier ($7/month) for always-on
-
----
-
-**Issue 5: CircleCI pipeline doesn't trigger**
+**Issue 6: CircleCI pipeline doesn't trigger**
 
 **Cause:** GitHub webhook not configured or branch mismatch
 
 **Solution:**
 1. Go to GitHub repo → Settings → Webhooks
 2. Verify CircleCI webhook exists
-3. Check branch name in Render matches your push (main vs master)
+3. Check branch name matches your push (main vs master)
 4. Manually trigger in CircleCI to test
 
 ---
 
-**Issue 6: Deploy hook not working**
+**Issue 7: Railway deployment works manually but not from CircleCI**
 
-**Cause:** Wrong environment variable or URL
+**Cause:** Railway CLI authentication issue
 
 **Solution:**
-1. Verify `RENDER_DEPLOY_HOOK` in CircleCI environment variables
-2. Check URL format: `https://api.render.com/deploy/srv-...?key=...`
-3. Regenerate deploy hook in Render if needed
-4. Test hook manually: `curl -X POST YOUR_DEPLOY_HOOK_URL`
+1. Verify all three environment variables are set in CircleCI
+2. Test Railway CLI login locally with same token
+3. Check CircleCI job logs for exact error message
+4. Ensure `railway login --browserless` is used (not interactive login)
 
 ---
 
@@ -1009,20 +1062,12 @@ This is expected:
 
 ### What You Accomplished Today
 
-1. ✅ Deployed Spring Boot application to Render
+1. ✅ Deployed Spring Boot application to Railway
 2. ✅ Created complete CI/CD pipeline (build → test → publish → deploy)
-3. ✅ Automated deployment with Render deploy hooks
+3. ✅ Automated deployment with Railway CLI
 4. ✅ Tested full pipeline with code changes
 5. ✅ Learned professional DevOps practices
 
-### Key Takeaways
-
-- **CI/CD automates the entire deployment process** - from code push to production in ~10 minutes
-- **Tests prevent broken deployments** - code must pass tests before reaching production
-- **Small, frequent changes are safer** - easier to debug and rollback if needed
-- **Professional DevOps workflow** - using industry-standard tools (CircleCI, Docker, Render)
-
----
 
 ## Additional Resources
 
@@ -1034,26 +1079,26 @@ This is expected:
 - [CI/CD Explained](https://www.redhat.com/en/topics/devops/what-is-ci-cd) - Red Hat
 
 **Video Tutorials:**
-- [Continuous Deployment Explained](https://www.youtube.com/results?search_query=continuous+deployment+explained) - Search for beginner-friendly videos
+- [Continuous Deployment Explained](https://www.youtube.com/results?search_query=continuous+deployment+explained)
 - [DevOps CI/CD Pipeline Tutorial](https://www.youtube.com/results?search_query=devops+cicd+pipeline+tutorial)
 
 ---
 
-### Render Deployment
+### Railway Deployment
 
 **Official Documentation:**
-- [Render Docs](https://render.com/docs) - Complete documentation
-- [Deploy Spring Boot on Render](https://render.com/docs/deploy-spring-boot) - Specific guide
-- [Docker on Render](https://render.com/docs/docker) - Docker deployment guide
-- [Environment Variables](https://render.com/docs/environment-variables) - Managing configs
+- [Railway Docs](https://docs.railway.app/) - Complete documentation
+- [Railway CLI Reference](https://docs.railway.app/develop/cli) - CLI commands
+- [Deployments Guide](https://docs.railway.app/deploy/deployments) - Deployment process
+- [Environment Variables](https://docs.railway.app/deploy/variables) - Managing configs
 
 **Video Tutorials:**
-- [Deploy Spring Boot to Render](https://www.youtube.com/results?search_query=deploy+spring+boot+to+render) - Step-by-step videos
-- [Render Tutorial for Beginners](https://www.youtube.com/results?search_query=render+deployment+tutorial)
+- [Deploy to Railway Tutorial](https://www.youtube.com/results?search_query=deploy+to+railway+tutorial)
+- [Railway CI/CD Setup](https://www.youtube.com/results?search_query=railway+cicd+tutorial)
 
 **Blog Posts:**
-- [Migrating from Heroku to Render](https://dev.to/render/migrating-from-heroku-to-render-5f7) - Comparison
-- [Why Render?](https://render.com/blog) - Official Render blog
+- [Railway Blog](https://blog.railway.app/) - Official Railway blog
+- [Railway vs Heroku](https://railway.app/heroku-alternative) - Comparison
 
 ---
 
@@ -1061,8 +1106,8 @@ This is expected:
 
 **Official Documentation:**
 - [CircleCI Deployment](https://circleci.com/docs/deployment-overview/) - Deployment strategies
-- [Deploy to Render from CircleCI](https://circleci.com/blog/deploy-to-render/) - Official integration guide
-- [Webhooks in CI/CD](https://circleci.com/docs/webhooks/) - Understanding webhooks
+- [Environment Variables](https://circleci.com/docs/env-vars/) - Managing secrets
+- [Workflows](https://circleci.com/docs/workflows/) - Job orchestration
 
 **Video Tutorials:**
 - [CircleCI Deployment Tutorial](https://www.youtube.com/results?search_query=circleci+deployment+tutorial)
@@ -1072,17 +1117,17 @@ This is expected:
 - [CircleCI Discuss](https://discuss.circleci.com/) - Community forum
 - [Deployment Examples](https://github.com/CircleCI-Public/circleci-demo-workflows) - Sample configs
 
----
+
 
 ### Troubleshooting & Best Practices
 
 **Guides:**
-- [Render Troubleshooting](https://render.com/docs/troubleshooting) - Common issues
+- [Railway Troubleshooting](https://docs.railway.app/deploy/deployments#troubleshooting) - Common issues
 - [Docker Debugging](https://docs.docker.com/config/containers/logging/) - Container logs
 - [Spring Boot Production Best Practices](https://docs.spring.io/spring-boot/docs/current/reference/html/deployment.html)
 
 **Tools:**
-- [Render Status](https://status.render.com/) - Check if Render is down
+- [Railway Status](https://status.railway.app/) - Check if Railway is down
 - [CircleCI Status](https://status.circleci.com/) - Check CircleCI status
 - [Docker Hub](https://hub.docker.com) - Verify images uploaded
 
@@ -1092,4 +1137,4 @@ This is expected:
 
 **Congratulations!** 🎉 You've completed a full CI/CD pipeline from code push to production deployment. This is a major achievement and a highly valuable professional skill!
 
-**You now have the power to deploy applications to production with a simple `git push`. Welcome to modern DevOps!** 🚀
+**You now have the power to deploy applications to production with a simple `git push`. Railway made this experience smooth and beginner-friendly. Welcome to modern DevOps!** 🚀
