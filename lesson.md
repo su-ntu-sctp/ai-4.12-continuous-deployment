@@ -231,7 +231,7 @@ Professional teams typically have multiple environments:
 
 ## Part 2 - Create a Railway Service from Your Docker Hub Image
 
-In Lesson 4.7, CircleCI built, tested and pushed your image to Docker Hub. Railway will **run that same image** - it does not build anything itself.
+In Lesson 4.7, you configured CircleCI to build, test and push your image to Docker Hub. In Lesson 4.10, you deployed our Docker image to Railway manually. In this lesson, we will continue the deployment from CircleCI to Railway so that it deploys the **same image**.
 
 ```
 CircleCI: build → test → publish ──► Docker Hub ──► Railway pulls the image and runs it
