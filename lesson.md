@@ -4,7 +4,7 @@
 
 By the end of this lesson, you will be able to:
 1. **Distinguish** between Continuous Delivery and Continuous Deployment
-2. **Deploy** a Spring Boot application to Railway
+2. **Deploy** a Docker image from Docker Hub to Railway
 3. **Configure** CircleCI to automatically deploy applications after successful tests
 4. **Implement** a complete CI/CD pipeline from code push to production
 
@@ -15,8 +15,8 @@ By the end of this lesson, you will be able to:
 Before starting this lesson, ensure you have:
 - Completed Lesson 4.7 (Continuous Integration with CircleCI)
 - Completed Lesson 4.10 (Hosting Options - Manual Hosting)
-- Your **devops-demo** Spring Boot project with a working CircleCI pipeline
-- Docker Hub account with `devops-demo` image published
+- Your **devops-demo** GitHub repository from Lesson 4.7, connected to CircleCI
+- Docker Hub account with your `devops-demo:latest` image published (public repository)
 - CircleCI pipeline showing build ✅ → test ✅ → publish ✅
 
 ---
@@ -30,7 +30,7 @@ In Lesson 4.7, you built a CI pipeline that automatically builds, tests, and pub
 **Today, you'll complete the pipeline:**
 - Code push → GitHub
 - CircleCI builds, tests, publishes
-- **Railway automatically deploys your app** ← NEW!
+- **CircleCI tells Railway to deploy the new image** ← NEW!
 - Users access your live application
 
 **This is Continuous Deployment (CD)!**
@@ -229,37 +229,46 @@ Professional teams typically have multiple environments:
 
 ---
 
-## Part 2 - Prepare Railway for Deployment
+## Part 2 - Create a Railway Service from Your Docker Hub Image
 
-### Why Railway?
+In Lesson 4.7, CircleCI built, tested and pushed your image to Docker Hub. Railway will **run that same image** - it does not build anything itself.
 
-In Lesson 4.10, you learned about hosting platforms. We're using Railway because:
+```
+CircleCI: build → test → publish ──► Docker Hub ──► Railway pulls the image and runs it
+```
 
-✅ Extremely simple deployment (2 minutes)
-✅ $5 monthly credit (perfect for learning)
-✅ No cold starts (always-on)
-✅ Easy integration with CircleCI
-✅ Beautiful dashboard and logs
+**Why deploy the image instead of the source code?**
+- The image that passed your tests is **exactly** the image that runs in production
+- The image is built once, by CI - Railway only pulls and runs it
+- Your single-stage Dockerfile from Lesson 4.7 stays as it is
 
 ---
 
-### Step 1: Review Your devops-demo Project
+### Step 1: Check Your devops-demo Project and Docker Hub Image
 
-Let's confirm what we have from Lesson 4.7:
+Use your **`devops-demo`** repository from Lesson 4.7 - the one connected to CircleCI. You do not need a new repository or any changes to your Dockerfile.
 
-**Your devops-demo project should have:**
-- ✅ Spring Boot application with `/hello` endpoint
-- ✅ Dockerfile (multi-stage build with correct JDK base images)
-- ✅ `.circleci/config.yml` with build, test, publish jobs
-- ✅ Docker image publishing to Docker Hub
-
-**Verify CircleCI Pipeline Works:**
+**1.1: Verify the CircleCI pipeline works**
 
 1. Go to [https://app.circleci.com](https://app.circleci.com)
-2. Check your devops-demo project
-3. Ensure latest pipeline shows: build ✅ → test ✅ → publish ✅
+2. Open your devops-demo project
+3. Ensure the latest pipeline shows: build ✅ → test ✅ → publish ✅
 
-**If pipeline is broken, fix it before proceeding!**
+**If the pipeline is broken, fix it before proceeding!**
+
+**1.2: Check your image on Docker Hub**
+
+1. Go to [https://hub.docker.com](https://hub.docker.com) and open your repositories
+2. Find **`devops-demo`** with the tag **`latest`**
+3. Make sure the repository is **Public** (Repository → Settings → Visibility)
+
+**Why public?** Railway pulls your image from Docker Hub. Pulling from a private registry requires a paid Railway plan.
+
+Note your full image name - you will need it in Step 3:
+
+```
+YOUR_DOCKERHUB_USERNAME/devops-demo:latest
+```
 
 ---
 
@@ -277,37 +286,27 @@ Let's confirm what we have from Lesson 4.7:
 
 ---
 
-### Step 3: Create Web Service on Railway
+### Step 3: Create a Service from Your Docker Image
 
-**3.1: Start New Project**
+**3.1: Create an empty project**
 
-1. Click **"Start a New Project"** (or "New Project")
-2. Select **"Deploy from GitHub repo"**
+1. Click **"New Project"**
+2. Select **"Empty Project"**
 
-**3.2: Connect to GitHub**
+**3.2: Add your image as a service**
 
-**If this is your first time:**
-- Click **"Connect GitHub"**
-- Authorize Railway to access your repositories
-- Select your devops-demo repository
+1. In the project canvas, click **"+ Create"** (or **"Add a Service"**)
+2. Select **"Docker Image"**
+3. Enter your image name, e.g. `YOUR_DOCKERHUB_USERNAME/devops-demo:latest`, and press **Enter**
+4. Click **"Deploy"** (if prompted)
 
-**If you've connected GitHub before:**
-- Just select your devops-demo repository from the list
+Railway pulls the image from Docker Hub and starts a container. There is **no build step** - the image is already built.
 
-**3.3: Deploy**
+**3.3: Rename the service (optional)**
 
-Railway automatically:
-1. Detects your Dockerfile
-2. Builds the Docker image
-3. Deploys the container
-4. **Deployment completes in 2-3 minutes!**
+Click the service → **Settings** → rename it to `devops-demo`.
 
-**3.4: Claim the Project**
-
-After deployment, you'll see a warning:
-> "This is a temporary project and will be deleted in 24 hours"
-
-Click **"Claim Project"** button to make it permanent.
+> **Do not choose "Deploy from GitHub repo".** That makes Railway build and deploy every push by itself - before your tests have run, and outside your CI pipeline. In this lesson, **only CircleCI** decides when to deploy.
 
 ---
 
@@ -334,19 +333,15 @@ https://devops-demo-production.up.railway.app
 
 **Watch the deployment logs:**
 
-In the Railway dashboard, click **"Deployments"** tab:
+In the Railway dashboard, click the **"Deployments"** tab, then open the latest deployment. You should see the image being pulled (not built), then Spring Boot starting:
+
 ```
-==> Building Dockerfile
-==> Downloading dependencies...
-==> Building JAR file...
-==> Creating Docker image...
-==> Starting service...
-==> Deployment successful!
+Pulling image YOUR_DOCKERHUB_USERNAME/devops-demo:latest
+...
+Started DevopsDemoApplication in X.XXX seconds
 ```
 
 **Test your application:**
-
-Once deployment completes:
 
 1. Copy the URL from Settings → Networking
 2. Add `/hello` to the URL
@@ -357,7 +352,9 @@ Once deployment completes:
 
 4. You should see: **"DevOps demo application is running!"**
 
-**Success!** Your app is deployed manually. Now let's automate it!
+**Success!** Railway is running the image your CI pipeline published.
+
+**But this is not continuous deployment yet.** When you push new code, CircleCI publishes a new image to Docker Hub - and Railway does nothing. Someone would have to redeploy by hand. In Part 3, you make deployment the **last step of the CI pipeline**.
 
 ---
 
@@ -365,68 +362,56 @@ Once deployment completes:
 
 ### Understanding the Automation Flow
 
-**Current state (from Lesson 4.7):**
+**Current state:**
 ```
 Code Push → GitHub → CircleCI → Build → Test → Publish to Docker Hub → STOPS
 ```
 
 **What we want:**
 ```
-Code Push → GitHub → CircleCI → Build → Test → Publish → Deploy to Railway → LIVE!
+Code Push → GitHub → CircleCI → Build → Test → Publish → Deploy → LIVE!
 ```
 
 ---
 
-### Method: Railway Webhooks
+### How CircleCI Triggers Railway
 
-Railway supports deployment triggers via webhooks. We'll use CircleCI to trigger Railway deployments after successful builds.
+CircleCI cannot "push" an image into Railway. Instead, a new **deploy** job runs after **publish** and tells Railway: *redeploy this service*. Railway then pulls the latest image from Docker Hub and replaces the running container.
 
 **How it works:**
-1. CircleCI builds and tests
-2. If successful, CircleCI triggers Railway deployment via Railway CLI
-3. Railway pulls latest code and redeploys
+1. CircleCI builds, tests and publishes the new image to Docker Hub
+2. If everything passed, the **deploy** job runs `railway redeploy` using the Railway CLI
+3. The CLI calls Railway's API, authenticated with a **project token**
+4. Railway pulls `devops-demo:latest` from Docker Hub and restarts the service
+
+If **build**, **test** or **publish** fails, the deploy job never runs - broken code never reaches production.
 
 ---
 
-### Step 1: Get Railway API Token
+### Step 1: Create a Railway Project Token
 
-**1.1: Go to Railway Account Settings**
+A **project token** can only deploy to one project and environment - safer for CI than a token for your whole account.
 
-1. Click your profile (bottom left)
-2. Click **"Account Settings"**
-3. Click **"Tokens"** tab
-
-**1.2: Create API Token**
-
-1. Click **"Create Token"**
-2. Give it a name: `CircleCI Deployment`
-3. Click **"Create"**
-4. **Copy the token** - you'll need it in CircleCI!
-   ```
-   Format: railway_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-   ```
+1. Open your Railway project
+2. Click **"Settings"** (project settings, not service settings)
+3. Click the **"Tokens"** tab
+4. Click **"Create Token"**:
+   - **Name:** `CircleCI Deployment`
+   - **Environment:** `production`
+5. **Copy the token** - you'll need it in CircleCI!
 
 **Important:** Save this token securely - it won't be shown again!
 
 ---
 
-### Step 2: Get Railway Service and Project IDs
-
-**2.1: Get Project ID**
-
-1. Go to your Railway project dashboard
-2. Click **"Settings"** (in left sidebar of project)
-3. Find **"Project ID"**
-4. Copy it (format: `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`)
-
-**2.2: Get Service ID**
+### Step 2: Get Your Railway Service ID
 
 1. Click on your **devops-demo** service
 2. Click **"Settings"** tab
 3. Find **"Service ID"**
 4. Copy it (format: `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`)
 
-**Save both IDs** - you'll add them to CircleCI next!
+You don't need the project ID - the project token already identifies the project and environment.
 
 ---
 
@@ -441,22 +426,19 @@ Railway supports deployment triggers via webhooks. We'll use CircleCI to trigger
 
 **3.2: Add Railway Credentials**
 
-Add these three environment variables:
+Add these two environment variables:
 
-**Variable 1: API Token**
+**Variable 1: Project Token**
 - **Name:** `RAILWAY_TOKEN`
-- **Value:** Your Railway API token from Step 1
+- **Value:** Your Railway project token from Step 1
 - Click **"Add Environment Variable"**
 
-**Variable 2: Project ID**
-- **Name:** `RAILWAY_PROJECT_ID`
-- **Value:** Your Project ID from Step 2
-- Click **"Add Environment Variable"**
-
-**Variable 3: Service ID**
+**Variable 2: Service ID**
 - **Name:** `RAILWAY_SERVICE_ID`
 - **Value:** Your Service ID from Step 2
 - Click **"Add Environment Variable"**
+
+**Why `RAILWAY_TOKEN`?** The Railway CLI automatically looks for a project token in the `RAILWAY_TOKEN` environment variable - no `railway login` needed.
 
 **Why environment variables?**
 - Keep credentials secret
@@ -562,44 +544,32 @@ Add this new `deploy` job after the `publish` job:
 
 ```yml
   # ==========================================
-  # DEPLOY JOB - Trigger Railway deployment
+  # DEPLOY JOB - Tell Railway to redeploy
   # ==========================================
   deploy:
     docker:
-      - image: cimg/base:stable
+      - image: cimg/node:lts
     steps:
       - run:
-          name: Install Railway CLI
+          name: Redeploy latest image on Railway
           command: |
-            echo "Installing Railway CLI..."
-            curl -fsSL https://railway.app/install.sh | sh
-            export PATH="/root/.railway/bin:$PATH"
-            railway --version
-      - run:
-          name: Trigger Railway Deployment
-          command: |
-            export PATH="/root/.railway/bin:$PATH"
-            echo "Logging in to Railway..."
-            railway login --browserless
-            
-            echo "Linking to Railway project..."
-            railway link $RAILWAY_PROJECT_ID
-            
-            echo "Triggering deployment..."
-            railway up --service $RAILWAY_SERVICE_ID
-            
-            echo "Deployment triggered successfully!"
-            echo "Railway is now pulling latest code and redeploying."
+            echo "Asking Railway to redeploy the latest image..."
+            npx --yes @railway/cli redeploy --service "$RAILWAY_SERVICE_ID" --yes
+            echo "Railway is now pulling $DOCKER_USERNAME/devops-demo:latest from Docker Hub."
 ```
 
-> **📌 Alternative Authentication:** If `railway login --browserless` does not work in your environment, you can remove the login step entirely. When the `RAILWAY_TOKEN` environment variable is set in CircleCI, the Railway CLI automatically authenticates using it without needing a login command. In that case, your Trigger Railway Deployment step can start directly from `railway link $RAILWAY_PROJECT_ID`.
+<!-- INSTRUCTOR TODO: confirm that `railway redeploy` pulls the NEW :latest image from Docker Hub (not the previously pulled one). If it does not, switch to commit-SHA image tags and update the service image via the Railway API. -->
 
 **What this does:**
-1. Installs Railway CLI in CircleCI
-2. Logs in using the API token
-3. Links to your Railway project
-4. Triggers deployment for your specific service
-5. Railway pulls latest code from GitHub and redeploys
+1. Uses a CircleCI image that has Node.js, so `npx` can run the Railway CLI without installing it
+2. The CLI reads your project token from `RAILWAY_TOKEN`
+3. `redeploy --service` tells Railway to redeploy your devops-demo service
+4. `--yes` skips the "are you sure?" prompt - there is nobody to answer it in CI
+5. Railway pulls the latest image from Docker Hub and replaces the running container
+
+**Notice what the deploy job does NOT need:**
+- No `checkout` - nothing is built or uploaded, so the source code isn't needed
+- No `railway login` or `railway link` - the project token is enough
 
 **4.4: Update Workflow**
 
@@ -698,30 +668,14 @@ jobs:
 
   deploy:
     docker:
-      - image: cimg/base:stable
+      - image: cimg/node:lts
     steps:
       - run:
-          name: Install Railway CLI
+          name: Redeploy latest image on Railway
           command: |
-            echo "Installing Railway CLI..."
-            curl -fsSL https://railway.app/install.sh | sh
-            export PATH="/root/.railway/bin:$PATH"
-            railway --version
-      - run:
-          name: Trigger Railway Deployment
-          command: |
-            export PATH="/root/.railway/bin:$PATH"
-            echo "Logging in to Railway..."
-            railway login --browserless
-            
-            echo "Linking to Railway project..."
-            railway link $RAILWAY_PROJECT_ID
-            
-            echo "Triggering deployment..."
-            railway up --service $RAILWAY_SERVICE_ID
-            
-            echo "Deployment triggered successfully!"
-            echo "Railway is now pulling latest code and redeploying."
+            echo "Asking Railway to redeploy the latest image..."
+            npx --yes @railway/cli redeploy --service "$RAILWAY_SERVICE_ID" --yes
+            echo "Railway is now pulling $DOCKER_USERNAME/devops-demo:latest from Docker Hub."
 
 workflows:
   build_test_publish_deploy:
@@ -756,16 +710,16 @@ git push origin main
    - ⏳ build (compiling...)
    - ⏳ test (running tests...)
    - ⏳ publish (pushing to Docker Hub...)
-   - ⏳ deploy (triggering Railway...)
+   - ⏳ deploy (asking Railway to redeploy...)
 
 **Timeline:**
 - Build: ~2-3 minutes
 - Test: ~2 minutes
 - Publish: ~2-3 minutes
-- Deploy: ~1 minute (Railway CLI trigger)
-- **Railway deployment:** ~2-3 minutes (after trigger)
+- Deploy: < 1 minute (one CLI call)
+- **Railway deployment:** ~1 minute (pull image and start - no build)
 
-**Total:** ~10-12 minutes from push to production!
+**Total:** ~7-9 minutes from push to production!
 
 ---
 
@@ -785,8 +739,8 @@ All 4 jobs should be green ✅:
 2. Click on your devops-demo project
 3. Click on your devops-demo service
 4. Click **"Deployments"** tab
-5. You should see a new deployment triggered
-6. Watch the deployment logs
+5. You should see a new deployment, started just after the CircleCI deploy job
+6. Open its logs - the image is pulled, not built
 
 **6.3: Test Your Application**
 
@@ -844,12 +798,11 @@ git push origin main
 3. All jobs complete successfully
 
 **In Railway:**
-1. Receives trigger from CircleCI
-2. Pulls latest code
-3. Rebuilds Docker image
-4. Deploys new version
+1. Receives the redeploy request from the CircleCI deploy job
+2. Pulls the new image from Docker Hub
+3. Replaces the running container with the new version
 
-**Timeline:** ~10-12 minutes total
+**Timeline:** ~7-9 minutes total
 
 ---
 
@@ -901,16 +854,14 @@ Publish Job:
 **3. Continuous Deployment (CircleCI → Railway)**
 ```
 Deploy Job:
-  - Install Railway CLI
-  - Authenticate with Railway API token
-  - Trigger deployment for specific service
-  
+  - Run the Railway CLI with npx
+  - Authenticate with the Railway project token
+  - Ask Railway to redeploy the devops-demo service
+
 Railway:
-  - Pull latest code from GitHub
-  - Build new Docker image
+  - Pull the new image from Docker Hub (no build - CI already built it)
   - Stop old version
   - Start new version
-  - Health check confirms app is running
   - Route traffic to new version
 ```
 
@@ -920,7 +871,7 @@ Users access: https://devops-demo-production.up.railway.app
 They see your latest changes!
 ```
 
-**Total time:** ~10-12 minutes from code push to production!
+**Total time:** ~7-9 minutes from code push to production!
 
 ---
 
@@ -940,45 +891,42 @@ They see your latest changes!
 
 ## Troubleshooting Guide
 
-### Issue 1: Deploy job fails - "railway: command not found"
+### Issue 1: Deploy job fails - "Unauthorized" or "Invalid token"
 
 **Solution:**
-Ensure these lines are in your deploy job:
-```yml
-curl -fsSL https://railway.app/install.sh | sh
-export PATH="/root/.railway/bin:$PATH"
-```
-Add `export PATH` before every `railway` command.
+1. Verify `RAILWAY_TOKEN` in CircleCI environment variables (no extra spaces)
+2. Make sure it is a **project token** (Project Settings → Tokens), not an account token
+3. Check the token was created for the **production** environment
+4. Regenerate the token in Railway if needed and update CircleCI
 
 ---
 
-### Issue 2: "railway login failed"
+### Issue 2: "Service not found"
 
 **Solution:**
-1. Verify `RAILWAY_TOKEN` in CircleCI environment variables
-2. Regenerate token in Railway if needed
-3. Ensure token starts with `railway_`
-4. Check token has no extra spaces
+1. Verify `RAILWAY_SERVICE_ID` in CircleCI
+2. It should be a UUID (format: `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`)
+3. Copy it again from the **service** Settings (not the project settings)
+4. Make sure the project token belongs to the same project as the service
 
 ---
 
-### Issue 3: "Project not found" or "Service not found"
+### Issue 3: Railway can't pull the image - "not found" or "access denied"
 
 **Solution:**
-1. Verify `RAILWAY_PROJECT_ID` in CircleCI
-2. Verify `RAILWAY_SERVICE_ID` in CircleCI
-3. Both should be UUIDs (format: `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`)
-4. Get correct IDs from Railway Settings
+1. Check the image name in the service Settings → Source matches Docker Hub exactly: `YOUR_DOCKERHUB_USERNAME/devops-demo:latest`
+2. Make sure the Docker Hub repository is **Public**
+3. Confirm the CircleCI **publish** job pushed the image (check the tag `latest` on Docker Hub)
 
 ---
 
-### Issue 4: Railway shows "Build failed"
+### Issue 4: Deploy succeeds but the old version is still running
 
 **Solution:**
-1. Check Railway logs for specific error
-2. Verify Dockerfile builds locally: `docker build -t test .`
-3. Ensure pom.xml has all dependencies
-4. Check Java version in Dockerfile matches project (21)
+1. Check the CircleCI **publish** job finished before **deploy** (the workflow `requires: - publish`)
+2. On Docker Hub, check `latest` was updated at the time of your push
+3. In Railway → Deployments, check a new deployment started after the deploy job
+4. Clear your browser cache, or test with `curl`
 
 ---
 
@@ -1001,14 +949,15 @@ Add `export PATH` before every `railway` command.
 
 ---
 
-### Issue 7: Railway deployment works manually but not from CircleCI
+### Issue 7: Railway deploys on every push, even when tests fail
 
 **Solution:**
-1. Verify all three environment variables are set in CircleCI
-2. Test Railway CLI login locally with same token
-3. Check CircleCI job logs for exact error message
-4. Ensure `railway login --browserless` is used (not interactive login)
-5. If `--browserless` still fails, try the alternative method: remove the login step and rely on `RAILWAY_TOKEN` being set — the CLI will authenticate automatically
+Your service is connected to your GitHub repository instead of the Docker image.
+1. Open the service → **Settings** → **Source**
+2. Disconnect the GitHub repository
+3. Set the source to your Docker image: `YOUR_DOCKERHUB_USERNAME/devops-demo:latest`
+
+Only CircleCI should trigger deployments.
 
 ---
 
@@ -1016,9 +965,9 @@ Add `export PATH` before every `railway` command.
 
 ### What You Accomplished Today
 
-1. ✅ Deployed Spring Boot application to Railway
+1. ✅ Deployed your Docker Hub image to Railway
 2. ✅ Created complete CI/CD pipeline (build → test → publish → deploy)
-3. ✅ Automated deployment with Railway CLI
+3. ✅ Automated deployment with a Railway project token and `railway redeploy`
 4. ✅ Tested full pipeline with code changes
 5. ✅ Learned professional DevOps practices
 
@@ -1030,7 +979,7 @@ Add `export PATH` before every `railway` command.
 - [CD Best Practices — Google Cloud](https://cloud.google.com/architecture/devops/devops-tech-continuous-delivery)
 - [CI/CD Explained — Red Hat](https://www.redhat.com/en/topics/devops/what-is-ci-cd)
 - [Railway Docs](https://docs.railway.app/)
-- [Railway CLI Reference](https://docs.railway.app/develop/cli)
+- [Deploying with the Railway CLI](https://docs.railway.com/cli/deploying)
 - [Deployments Guide — Railway](https://docs.railway.app/deploy/deployments)
 - [CircleCI Deployment Overview](https://circleci.com/docs/deployment-overview/)
 - [CircleCI Environment Variables](https://circleci.com/docs/env-vars/)
