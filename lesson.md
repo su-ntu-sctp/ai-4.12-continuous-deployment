@@ -288,19 +288,20 @@ YOUR_DOCKERHUB_USERNAME/devops-demo:latest
 
 ### Step 3: Create a Service from Your Docker Image
 
-**3.1: Create an empty project**
+This is the same as Lesson 4.10 Part 3 - but this time with the `latest` image your CI pipeline publishes.
 
-1. Click **"New Project"**
-2. Select **"Empty Project"**
+**3.1: Create a new project from your image**
 
-**3.2: Add your image as a service**
-
-1. In the project canvas, click **"+ Create"** (or **"Add a Service"**)
-2. Select **"Docker Image"**
-3. Enter your image name, e.g. `YOUR_DOCKERHUB_USERNAME/devops-demo:latest`, and press **Enter**
-4. Click **"Deploy"** (if prompted)
+1. Click **"New Project"** (or "Start a New Project")
+2. Select **"Deploy from Docker Image"**
+3. Enter your image name **without** a `docker.io/` prefix, e.g. `YOUR_DOCKERHUB_USERNAME/devops-demo:latest`
+4. Click **"Deploy"**
 
 Railway pulls the image from Docker Hub and starts a container. There is **no build step** - the image is already built.
+
+**3.2: Claim the project**
+
+If the project is marked as temporary, click **"Claim Project"** to keep it.
 
 **3.3: Rename the service (optional)**
 
@@ -522,7 +523,7 @@ jobs:
           name: Push to Docker Hub
           command: |
             echo "Logging in to Docker Hub..."
-            echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
+            echo $DOCKER_TOKEN | docker login -u $DOCKER_USERNAME --password-stdin
             echo "Pushing image to Docker Hub..."
             docker push $DOCKER_USERNAME/devops-demo:latest
 
@@ -534,6 +535,7 @@ workflows:
           requires:
             - build
       - publish:
+          context: docker-hub
           requires:
             - test
 ```
@@ -584,6 +586,7 @@ workflows:
           requires:
             - build
       - publish:
+          context: docker-hub
           requires:
             - test
       - deploy:
@@ -662,7 +665,7 @@ jobs:
           name: Push to Docker Hub
           command: |
             echo "Logging in to Docker Hub..."
-            echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
+            echo $DOCKER_TOKEN | docker login -u $DOCKER_USERNAME --password-stdin
             echo "Pushing image to Docker Hub..."
             docker push $DOCKER_USERNAME/devops-demo:latest
 
@@ -685,6 +688,7 @@ workflows:
           requires:
             - build
       - publish:
+          context: docker-hub
           requires:
             - test
       - deploy:
