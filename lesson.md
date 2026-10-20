@@ -408,9 +408,10 @@ A **project token** can only deploy to one project and environment - safer for C
 ### Step 2: Get Your Railway Service ID
 
 1. Click on your **devops-demo** service
-2. Click **"Settings"** tab
-3. Find **"Service ID"**
-4. Copy it (format: `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`)
+2. Click the **"Variables"** tab
+3. Click on "variables added by Railway
+4. Scroll to the bottom and look for `RAILWAY_SERVICE_ID`
+5. Copy it (format: `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`)
 
 You don't need the project ID - the project token already identifies the project and environment.
 
